@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODAK Haber - Admin Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
+        .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-box { background: #1a1a1a; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center; }
+        .login-logo { width: 80px; height: 80px; background: linear-gradient(135deg, #E53935, #FF6F61); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: white; font-size: 32px; }
+        .login-title { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+        .login-subtitle { color: #888; margin-bottom: 32px; }
+        .form-input { width: 100%; padding: 12px 16px; border: 1px solid #333; border-radius: 10px; font-size: 14px; background: #222; color: #fff; outline: none; }
+        .form-input:focus { border-color: #E53935; }
+        .login-btn { width: 100%; padding: 14px; background: #E53935; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+        .login-btn:hover { background: #D32F2F; }
+        .admin-container { display: none; }
+        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #1a1a1a; padding: 20px 0; border-right: 1px solid #333; z-index: 10; }
+        .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid #333; text-align: center; }
+        .sidebar-logo h2 { color: #E53935; font-size: 22px; }
+        .sidebar-logo small { color: #666; font-size: 11px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #999; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .nav-item:hover, .nav-item.active { background: #E53935; color: white; }
+        .nav-item i { width: 20px; text-align: center; }
+        .main { margin-left: 240px; padding: 24px; min-height: 100vh; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #333; }
+        .stat-card .label { color: #888; font-size: 12px; margin-bottom: 4px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #fff; }
+        .stat-card .value.green { color: #4CAF50; }
+        .stat-card .value.red { color: #E53935; }
+        .stat-card .value.blue { color: #2196F3; }
+        .card { background: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #333; margin-bottom: 20px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .card-title i { color: #E53935; }
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: #E53935; color: white; }
+        .btn-primary:hover { background: #D32F2F; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #333; font-size: 13px; }
+        th { color: #888; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+        td { color: #ddd; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .badge-ok { background: #1b5e20; color: #4CAF50; }
+        .badge-err { background: #b71c1c33; color: #f44336; }
+        .badge-cat { background: #E5393520; color: #E53935; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .search-box { width: 100%; padding: 10px 14px; border: 1px solid #333; border-radius: 8px; background: #222; color: #fff; font-size: 14px; margin-bottom: 16px; outline: none; }
+        .search-box:focus { border-color: #E53935; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #1a1a1a; border-radius: 16px; padding: 24px; width: 90%; max-width: 500px; border: 1px solid #333; }
+        .modal h3 { margin-bottom: 16px; font-size: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; font-weight: 600; }
+        .form-select { width: 100%; padding: 10px; border: 1px solid #333; border-radius: 8px; background: #222; color: #fff; font-size: 14px; }
+        textarea.form-input { min-height: 80px; resize: vertical; }
+        .flex { display: flex; gap: 8px; align-items: center; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .empty-row td { color: #f44336; font-style: italic; }
+        .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #4CAF50; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .sort-handle { cursor: grab; color: #666; }
+        .sort-handle:hover { color: #E53935; }
+        .summary-item { padding: 12px; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; }
+        .summary-item .title { font-weight: 600; font-size: 14px; }
+        .summary-item .text { color: #999; font-size: 13px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <!-- Login -->
+    <div class="login-container" id="loginSection">
+        <div class="login-box">
+            <div class="login-logo"><i class="fas fa-newspaper"></i></div>
+            <h1 class="login-title">ODAK Admin</h1>
+            <p class="login-subtitle">Yönetim paneline giriş yapın</p>
+            <div class="form-group">
+                <input type="password" class="form-input" id="passwordInput" placeholder="Şifre" onkeydown="if(event.key==='Enter')login()">
+            </div>
+            <button class="login-btn" onclick="login()"><i class="fas fa-sign-in-alt"></i> Giriş Yap</button>
+            <p id="loginError" style="color:#f44336;margin-top:12px;display:none">Hatalı şifre!</p>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="admin-container" id="adminSection">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <h2>ODAK</h2>
+                <small>Admin Panel v2.0</small>
+            </div>
+            <div style="margin-top:16px">
+                <div class="nav-item active" onclick="showSection('dashboard')"><i class="fas fa-chart-bar"></i> Dashboard</div>
+                <div class="nav-item" onclick="showSection('sources')"><i class="fas fa-rss"></i> RSS Kaynakları</div>
+                <div class="nav-item" onclick="showSection('notifications')"><i class="fas fa-bell"></i> Bildirimler</div>
+                <div class="nav-item" onclick="showSection('summary')"><i class="fas fa-brain"></i> AI Özet</div>
+                <div class="nav-item" onclick="showSection('messages')"><i class="fas fa-envelope"></i> Mesajlar</div>
+                <div class="nav-item" onclick="showSection('categories')"><i class="fas fa-tags"></i> Kategoriler</div>
+            </div>
+        </div>
+
+        <div class="main">
+            <!-- Dashboard -->
+            <div class="section active" id="sec-dashboard">
+                <h2 style="margin-bottom:20px"><i class="fas fa-chart-bar" style="color:#E53935"></i> Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="label">Toplam Haber</div><div class="value" id="st-news">-</div></div>
+                    <div class="stat-card"><div class="label">RSS Kaynağı</div><div class="value blue" id="st-sources">-</div></div>
+                    <div class="stat-card"><div class="label">Aktif Kaynak</div><div class="value green" id="st-active">-</div></div>
+                    <div class="stat-card"><div class="label">Kullanıcılar</div><div class="value" id="st-users">-</div></div>
+                    <div class="stat-card"><div class="label"><span class="online-dot"></span>Online</div><div class="value green" id="st-online">-</div></div>
+                    <div class="stat-card"><div class="label">Mesajlar</div><div class="value" id="st-msgs">-</div></div>
+                    <div class="stat-card"><div class="label">Okunmamış</div><div class="value red" id="st-unread">-</div></div>
+                    <div class="stat-card"><div class="label">Son Güncelleme</div><div class="value" id="st-refresh" style="font-size:14px">-</div></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-exclamation-triangle"></i> Boş Kaynaklar (Haber gelmiyor)</div>
+                    <div id="emptySourcesList">Yükleniyor...</div>
+                </div>
+            </div>
+
+            <!-- RSS Sources -->
+            <div class="section" id="sec-sources">
+                <div class="flex-between" style="margin-bottom:16px">
+                    <h2><i class="fas fa-rss" style="color:#E53935"></i> RSS Kaynakları</h2>
+                    <div class="flex">
+                        <button class="btn btn-primary" onclick="openAddSourceModal()"><i class="fas fa-plus"></i> Kaynak Ekle</button>
+                        <select id="sortMode" class="form-select" style="width:auto" onchange="renderSources()">
+                            <option value="alpha">Alfabetik</option>
+                            <option value="category">Kategoriye Göre</option>
+                            <option value="custom">Özel Sıralama</option>
+                        </select>
+                    </div>
+                </div>
+                <input type="text" class="search-box" id="sourceSearch" placeholder="Kaynak ara..." oninput="renderSources()">
+                <div id="sourcesTable">Yükleniyor...</div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="section" id="sec-notifications">
+                <h2 style="margin-bottom:16px"><i class="fas fa-bell" style="color:#E53935"></i> Manuel Bildirim Gönder</h2>
+                <div class="card">
+                    <div class="form-group">
+                        <label class="form-label">Başlık</label>
+                        <input type="text" class="form-input" id="notifTitle" value="ODAK Haber" placeholder="Bildirim başlığı">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mesaj</label>
+                        <textarea class="form-input" id="notifBody" placeholder="Bildirim mesajı yazın..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Haber Linki (opsiyonel)</label>
+                        <input type="text" class="form-input" id="notifLink" placeholder="https://...">
+                    </div>
+                    <button class="btn btn-primary" onclick="sendManualNotification()" id="sendNotifBtn">
+                        <i class="fas fa-paper-plane"></i> Tüm Kullanıcılara Gönder
+                    </button>
+                    <div id="notifResult" style="margin-top:12px"></div>
+                </div>
+            </div>
+
+            <!-- AI Summary -->
+            <div class="section" id="sec-summary">
+                <div class="flex-between" style="margin-bottom:16px">
+                    <h2><i class="fas fa-brain" style="color:#E53935"></i> AI Günlük Özet</h2>
+                    <button class="btn btn-success" onclick="openAddSummaryModal()"><i class="fas fa-plus"></i> Öğe Ekle</button>
+                </div>
+                <div id="summaryList">Yükleniyor...</div>
+            </div>
+
+            <!-- Messages -->
+            <div class="section" id="sec-messages">
+                <h2 style="margin-bottom:16px"><i class="fas fa-envelope" style="color:#E53935"></i> Mesajlar</h2>
+                <div id="messagesList">Yükleniyor...</div>
+            </div>
+
+            <!-- Categories -->
+            <div class="section" id="sec-categories">
+                <h2 style="margin-bottom:16px"><i class="fas fa-tags" style="color:#E53935"></i> Kategori Yönetimi</h2>
+                <div class="card">
+                    <div class="flex" style="margin-bottom:16px">
+                        <input type="text" class="form-input" id="newCatName" placeholder="Yeni kategori adı" style="flex:1">
+                        <button class="btn btn-primary" onclick="addCategory()"><i class="fas fa-plus"></i> Ekle</button>
+                    </div>
+                    <div id="categoriesList">Yükleniyor...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Source Modal -->
+    <div class="modal-overlay" id="editSourceModal">
+        <div class="modal">
+            <h3 id="editModalTitle">Kaynak Düzenle</h3>
+            <input type="hidden" id="editSourceId">
+            <div class="form-group"><label class="form-label">Kaynak Adı</label><input type="text" class="form-input" id="editName"></div>
+            <div class="form-group"><label class="form-label">RSS URL</label><input type="text" class="form-input" id="editUrl"></div>
+            <div class="form-group"><label class="form-label">Kategori</label>
+                <select class="form-select" id="editCategory"><option>GÜNDEM</option><option>SPOR</option><option>EKONOMİ</option><option>TEKNOLOJİ</option><option>DÜNYA</option><option>MAGAZİN</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">Logo URL</label><input type="text" class="form-input" id="editLogo" placeholder="https://..."></div>
+            <div class="flex" style="justify-content:flex-end;margin-top:16px">
+                <button class="btn" style="background:#333;color:#fff" onclick="closeModal('editSourceModal')">İptal</button>
+                <button class="btn btn-primary" onclick="saveSource()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Summary Modal -->
+    <div class="modal-overlay" id="addSummaryModal">
+        <div class="modal">
+            <h3>Özet Öğesi Ekle</h3>
+            <div class="form-group"><label class="form-label">Başlık</label><input type="text" class="form-input" id="sumTitle"></div>
+            <div class="form-group"><label class="form-label">Özet</label><textarea class="form-input" id="sumSummary"></textarea></div>
+            <div class="form-group"><label class="form-label">Kaynak</label><input type="text" class="form-input" id="sumSource" value="Admin"></div>
+            <div class="flex" style="justify-content:flex-end;margin-top:16px">
+                <button class="btn" style="background:#333;color:#fff" onclick="closeModal('addSummaryModal')">İptal</button>
+                <button class="btn btn-primary" onclick="addSummaryItem()">Ekle</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+const API = window.location.origin + '/api';
+let TOKEN = '';
+let allSources = [];
+
+function login() {
+    const pw = document.getElementById('passwordInput').value;
+    TOKEN = pw;
+    fetch(API + '/admin/stats', { headers: { 'X-Admin-Token': TOKEN } })
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(() => {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('adminSection').style.display = 'block';
+            loadDashboard();
+        })
+        .catch(() => { document.getElementById('loginError').style.display = 'block'; });
+}
+
+function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec-' + name).classList.add('active');
+    event.target.closest('.nav-item').classList.add('active');
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'sources') loadSources();
+    if (name === 'summary') loadSummary();
+    if (name === 'messages') loadMessages();
+    if (name === 'categories') loadCategories();
+}
+
+function h(tag) { return { 'X-Admin-Token': TOKEN, ...(tag ? { 'Content-Type': 'application/json' } : {}) }; }
+
+async function loadDashboard() {
+    const stats = await (await fetch(API + '/admin/stats', { headers: h() })).json();
+    document.getElementById('st-news').textContent = stats.news_count;
+    document.getElementById('st-sources').textContent = stats.sources_count;
+    document.getElementById('st-active').textContent = stats.active_sources;
+    document.getElementById('st-users').textContent = stats.users_count;
+    document.getElementById('st-online').textContent = stats.online_count || 0;
+    document.getElementById('st-msgs').textContent = stats.messages_count;
+    document.getElementById('st-unread').textContent = stats.unread_messages;
+    document.getElementById('st-refresh').textContent = stats.last_cache_refresh ? new Date(stats.last_cache_refresh).toLocaleString('tr-TR') : '-';
+
+    const empty = await (await fetch(API + '/admin/empty-sources', { headers: h() })).json();
+    const el = document.getElementById('emptySourcesList');
+    if (empty.count === 0) {
+        el.innerHTML = '<p style="color:#4CAF50"><i class="fas fa-check-circle"></i> Tüm kaynaklar çalışıyor!</p>';
+    } else {
+        el.innerHTML = '<table><tr><th>Kaynak</th><th>Kategori</th><th>URL</th></tr>' +
+            empty.empty_sources.map(s => `<tr class="empty-row"><td>${s.name}</td><td><span class="badge badge-cat">${s.category}</span></td><td style="font-size:11px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.url}</td></tr>`).join('') + '</table>';
+    }
+}
+
+async function loadSources() {
+    const data = await (await fetch(API + '/sources')).json();
+    allSources = [];
+    for (const [cat, sources] of Object.entries(data)) {
+        for (const s of sources) { allSources.push({ ...s, category: cat }); }
+    }
+    // Also fetch full source list with IDs from admin
+    try {
+        const res = await (await fetch(API + '/admin/sources', { headers: h() })).json();
+        const adminSources = res.sources || res;
+        if (Array.isArray(adminSources)) {
+            allSources = adminSources.map(s => { delete s._id; return s; });
+        }
+    } catch {}
+    renderSources();
+}
+
+function renderSources() {
+    const search = (document.getElementById('sourceSearch')?.value || '').toLowerCase();
+    const sort = document.getElementById('sortMode')?.value || 'alpha';
+    let filtered = allSources.filter(s => !search || s.name.toLowerCase().includes(search) || s.url.toLowerCase().includes(search));
+
+    if (sort === 'alpha') filtered.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+    else if (sort === 'category') filtered.sort((a, b) => a.category.localeCompare(b.category, 'tr') || a.name.localeCompare(b.name, 'tr'));
+
+    document.getElementById('sourcesTable').innerHTML = `
+        <div style="margin-bottom:8px;color:#888;font-size:13px">${filtered.length} kaynak gösteriliyor</div>
+        <table><tr><th>Kaynak</th><th>Kategori</th><th>RSS URL</th><th>Durum</th><th>İşlem</th></tr>
+        ${filtered.map(s => `<tr>
+            <td><strong>${s.name}</strong></td>
+            <td><span class="badge badge-cat">${s.category}</span></td>
+            <td style="font-size:11px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.url}</td>
+            <td>${s.active !== false ? '<span class="badge badge-ok">Aktif</span>' : '<span class="badge badge-err">Pasif</span>'}</td>
+            <td class="flex">
+                <button class="btn btn-sm btn-warning" onclick='editSource(${JSON.stringify(s).replace(/'/g, "\\'")})'><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSource('${s.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`).join('')}
+        </table>`;
+}
+
+function editSource(s) {
+    document.getElementById('editModalTitle').textContent = 'Kaynak Düzenle';
+    document.getElementById('editSourceId').value = s.id || '';
+    document.getElementById('editName').value = s.name;
+    document.getElementById('editUrl').value = s.url;
+    document.getElementById('editCategory').value = s.category;
+    document.getElementById('editLogo').value = s.logo_url || '';
+    document.getElementById('editSourceModal').classList.add('show');
+}
+
+function openAddSourceModal() {
+    document.getElementById('editModalTitle').textContent = 'Yeni Kaynak Ekle';
+    document.getElementById('editSourceId').value = '';
+    document.getElementById('editName').value = '';
+    document.getElementById('editUrl').value = '';
+    document.getElementById('editCategory').value = 'GÜNDEM';
+    document.getElementById('editLogo').value = '';
+    document.getElementById('editSourceModal').classList.add('show');
+}
+
+async function saveSource() {
+    const id = document.getElementById('editSourceId').value;
+    const body = {
+        name: document.getElementById('editName').value,
+        url: document.getElementById('editUrl').value,
+        category: document.getElementById('editCategory').value,
+        logo_url: document.getElementById('editLogo').value,
+        active: true,
+    };
+    if (id) {
+        await fetch(API + '/admin/sources/' + id, { method: 'PUT', headers: h(true), body: JSON.stringify(body) });
+    } else {
+        await fetch(API + '/admin/sources', { method: 'POST', headers: h(true), body: JSON.stringify(body) });
+    }
+    closeModal('editSourceModal');
+    loadSources();
+}
+
+async function deleteSource(id) {
+    if (!confirm('Bu kaynağı silmek istediğinizden emin misiniz?')) return;
+    await fetch(API + '/admin/sources/' + id, { method: 'DELETE', headers: h() });
+    loadSources();
+}
+
+async function sendManualNotification() {
+    const btn = document.getElementById('sendNotifBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+    try {
+        const res = await fetch(API + '/admin/notifications/send-manual', {
+            method: 'POST', headers: h(true),
+            body: JSON.stringify({
+                title: document.getElementById('notifTitle').value,
+                body: document.getElementById('notifBody').value,
+                news_link: document.getElementById('notifLink').value,
+            })
+        });
+        const data = await res.json();
+        document.getElementById('notifResult').innerHTML = `<span style="color:#4CAF50"><i class="fas fa-check-circle"></i> ${data.sent_count}/${data.total_devices} cihaza gönderildi!</span>`;
+    } catch (e) {
+        document.getElementById('notifResult').innerHTML = `<span style="color:#f44336"><i class="fas fa-times-circle"></i> Hata!</span>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Tüm Kullanıcılara Gönder';
+}
+
+async function loadSummary() {
+    const data = await (await fetch(API + '/summary/global')).json();
+    const el = document.getElementById('summaryList');
+    if (!data.items || data.items.length === 0) {
+        el.innerHTML = '<p style="color:#888">Henüz özet oluşturulmamış.</p>';
+        return;
+    }
+    el.innerHTML = data.items.map((item, i) => `
+        <div class="summary-item">
+            <div class="flex-between">
+                <div class="title">${item.title || 'Başlıksız'}</div>
+                <button class="btn btn-sm btn-danger" onclick="deleteSummaryItem(${i})"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="text">${item.summary || ''}</div>
+            <div style="margin-top:4px;font-size:11px;color:#666">${item.source || ''} | ${item.category || ''}</div>
+        </div>
+    `).join('');
+    if (data.overall) {
+        el.innerHTML += `<div class="card" style="margin-top:12px;border-color:#E53935"><div class="card-title"><i class="fas fa-lightbulb"></i> Genel Değerlendirme</div><p style="color:#ccc">${data.overall}</p></div>`;
+    }
+}
+
+async function deleteSummaryItem(index) {
+    if (!confirm('Bu özet öğesini silmek istediğinizden emin misiniz?')) return;
+    await fetch(API + '/admin/summary/' + index, { method: 'DELETE', headers: h() });
+    loadSummary();
+}
+
+function openAddSummaryModal() { document.getElementById('addSummaryModal').classList.add('show'); }
+
+async function addSummaryItem() {
+    await fetch(API + '/admin/summary/add', {
+        method: 'POST', headers: h(true),
+        body: JSON.stringify({
+            title: document.getElementById('sumTitle').value,
+            summary: document.getElementById('sumSummary').value,
+            source: document.getElementById('sumSource').value,
+        })
+    });
+    closeModal('addSummaryModal');
+    loadSummary();
+}
+
+async function loadMessages() {
+    const res = await (await fetch(API + '/admin/messages', { headers: h() })).json();
+    const msgs = res.messages || res;
+    const el = document.getElementById('messagesList');
+    if (!msgs || !msgs.length) { el.innerHTML = '<p style="color:#888">Henüz mesaj yok.</p>'; return; }
+    el.innerHTML = '<table><tr><th>İsim</th><th>E-posta</th><th>Mesaj</th><th>Tarih</th><th>Durum</th></tr>' +
+        msgs.map(m => `<tr>
+            <td>${m.name || '-'}</td>
+            <td>${m.email || '-'}</td>
+            <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.message || ''}</td>
+            <td style="font-size:11px">${m.created_at ? new Date(m.created_at).toLocaleString('tr-TR') : '-'}</td>
+            <td>${m.read ? '<span class="badge badge-ok">Okundu</span>' : '<span class="badge badge-err">Yeni</span>'}</td>
+        </tr>`).join('') + '</table>';
+}
+
+async function loadCategories() {
+    const data = await (await fetch(API + '/admin/categories', { headers: h() })).json();
+    document.getElementById('categoriesList').innerHTML = data.categories.map(c =>
+        `<div style="display:inline-block;padding:8px 16px;margin:4px;background:#222;border:1px solid #333;border-radius:8px"><span class="badge badge-cat">${c}</span></div>`
+    ).join('');
+}
+
+async function addCategory() {
+    const name = document.getElementById('newCatName').value.trim();
+    if (!name) return;
+    await fetch(API + '/admin/categories', { method: 'POST', headers: h(true), body: JSON.stringify({ name }) });
+    document.getElementById('newCatName').value = '';
+    loadCategories();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// Close modals on outside click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+});
+</script>
+</body>
+</html>
